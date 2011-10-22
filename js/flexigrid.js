@@ -223,7 +223,15 @@
 					this.fixHeight();
 					this.colresize = false;
 					var name = p.colModel[n].name;		// Store the widths in the cookies
-					$.cookie('flexiwidths/'+name, nw);					
+					try{
+					   $.cookie('flexiwidths/'+name, nw);
+				    }
+				    catch(e){
+					  var date = new Date();
+					  date.setTime(date.getTime()+(10*365*24*60*60*1000)); // one week
+				      var expiration = date.toGMTString();
+				      document.cookie = 'flexiwidths/'+name + "=" + nw + "; expires=" + expiration+"; path=/";
+			 	    }				
 				} else if (this.vresize) {
 					this.vresize = false;
 				} else if (this.colCopy) {
@@ -743,9 +751,22 @@
 				$(th).attr('axis', 'col' + i);
 				if( cm ) {	// only use cm if its defined
 					var cookie_width = 'flexiwidths/'+cm.name;		// Re-Store the widths in the cookies
-					if( $.cookie(cookie_width) != undefined ) {
-						cm.width = $.cookie(cookie_width);
-					}
+					try{
+					   if ($.cookie(cookie_width) != undefined ) {
+					  	   cm.width = $.cookie(cookie_width);
+				  	  } 
+				    }catch(e){
+					  var index = document.cookie.indexOf(cookie_width);
+			          if (index != -1) {
+					  	var valStart = index + cookie_width.length+1;
+					      var valEnd = document.cookie.indexOf(";", valStart);
+					      if (valEnd == -1) {
+					        valEnd = document.cookie.length;
+					      }
+					      var val = document.cookie.substring(valStart, valEnd);
+					      cm.width = val;
+				      }
+				    }
 					if( cm.display != undefined ) {
 						th.innerHTML = cm.display;
 					}
