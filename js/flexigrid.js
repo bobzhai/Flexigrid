@@ -1381,4 +1381,25 @@
   $.fn.flexSearch = function(p) { // function to search grid
     return this.each( function() { if (this.grid&&this.p.searchitems) this.grid.doSearch(); });
   }; //end flexSearch
+  $.fn.flexModify = function(p){ //function to modify selected row to grid
+         $('tr',this.grid).each(function(){
+		      var self = $(this);
+		      if (self.hasClass('trSelected'))
+		      {
+			     p(self);
+			     return false;
+		       }
+	        });	
+   };// end flexModify
+ 
+  $.fn.flexDeleteRows = function(p){ //function to delete selected rows to grid 
+           $('tr',this.grid).each(function(){
+		      var self = $(this);
+		      if (self.hasClass('trSelected'))
+		      {
+			     p(self);			    
+		       }
+	        });	
+  };//end flexDeleteRows
+
 })(jQuery);
