@@ -10,6 +10,7 @@
 	$.addFlex = function (t, p) {
 		if (t.grid) return false; //return if already exist
 		p = $.extend({ //apply default properties
+			GridName:'flexigrid', 
 			height: 200, //default height
 			width: 'auto', //auto width
 			striped: true, //apply odd even stripes
@@ -30,12 +31,12 @@
 			rpOptions: [10, 15, 20, 30, 50], //allowed per-page values 
 			title: false,
 			idProperty: 'id',
-			pagestat: 'Displaying {from} to {to} of {total} items',
-			pagetext: 'Page',
+			pagestat: '显示 {from} ／ {to} ／ {total} 数据',
+			pagetext: '页数',
 			outof: 'of',
-			findtext: 'Find',
+			findtext: '查找',
 			params: [], //allow optional parameters to be passed around
-			procmsg: 'Processing, please wait ...',
+			procmsg: '请等待 加载数据中...',
 			query: '',
 			qtype: '',
 			nomsg: 'No items',
@@ -222,7 +223,8 @@
 					this.rePosDrag();
 					this.fixHeight();
 					this.colresize = false;
-					var name = p.colModel[n].name;		// Store the widths in the cookies
+					var name = p.colModel[n].name;		// Store the widths in the cookies	
+				
 					try{
 					   $.cookie('flexiwidths/'+name, nw);
 				    }
@@ -231,7 +233,8 @@
 					  date.setTime(date.getTime()+(10*365*24*60*60*1000)); // one week
 				      var expiration = date.toGMTString();
 				      document.cookie = 'flexiwidths/'+name + "=" + nw + "; expires=" + expiration+"; path=/";
-			 	    }				
+			 	    }
+								
 				} else if (this.vresize) {
 					this.vresize = false;
 				} else if (this.colCopy) {
@@ -366,6 +369,9 @@
 							function () {
 								var td = document.createElement('td');
 								var idx = $(this).attr('axis').substr(3);
+								if (($(this).attr('tdalign')=='right'))
+								td.align = 'right';
+								else
 								td.align = this.align;
 								// If each row is the object itself (no 'cell' key)
 								if (typeof row.cell == 'undefined') {
@@ -383,7 +389,7 @@
 								if( offs >0 ) {
 									$(td).css('background',  text.substr(offs+7,7) );
 								}
-								
+
 								$(td).attr('abbr', $(this).attr('abbr'));
 								$(tr).append(td);
 								td = null;
@@ -426,7 +432,7 @@
 							var td = document.createElement('td');
 							var idx = $(this).attr('axis').substr(3);
 							td.align = this.align;
-							
+
 							var text = $("cell:eq(" + idx + ")", robj).text();
 							var offs = text.indexOf( '<BGCOLOR=' );
 							if( offs >0 ) {
@@ -509,6 +515,7 @@
 				$('.pPageStat', this.pDiv).html(stat);
 			},
 			populate: function () { //get latest data
+			
 				if (this.loading) {
 					return true;
 				}
@@ -563,6 +570,7 @@
 						param[param.length] = p.params[pi];
 					}
 				}
+
 				$.ajax({
 					type: p.method,
 					url: p.url,
@@ -570,6 +578,7 @@
 					dataType: p.dataType,
 					success: function (data) {
 						g.addData(data);
+						
 					},
 					error: function (XMLHttpRequest, textStatus, errorThrown) {
 						try {
@@ -637,8 +646,9 @@
 						if (p.sortname == $(pth).attr('abbr') && p.sortname) {
 							this.className = 'sorted';
 						}
+		
 						$(tdDiv).css({
-							textAlign: pth.align,
+							textAlign: $(pth).attr('tdalign'),
 							width: $('div:first', pth)[0].style.width
 						});
 						if (pth.hidden) {
@@ -725,7 +735,7 @@
 					}
 				});
 			},
-			
+
 			combo_flag: true,
 			combo_resetIndex: function(selObj)
 			{
@@ -754,9 +764,11 @@
 					try{
 					   if ($.cookie(cookie_width) != undefined ) {
 					  	   cm.width = $.cookie(cookie_width);
+					      
 				  	  } 
 				    }catch(e){
 					  var index = document.cookie.indexOf(cookie_width);
+					 
 			          if (index != -1) {
 					  	var valStart = index + cookie_width.length+1;
 					      var valEnd = document.cookie.indexOf(";", valStart);
@@ -767,6 +779,7 @@
 					      cm.width = val;
 				      }
 				    }
+					
 					if( cm.display != undefined ) {
 						th.innerHTML = cm.display;
 					}
@@ -774,6 +787,11 @@
 						$(th).attr('abbr', cm.name);
 					}
 					if (cm.align) {
+						if (cm.align==='right'){
+						  th.align = 'center';
+						  $(th).attr('tdalign','right');
+					    }
+						else
 						th.align = cm.align;
 					}
 					if (cm.width) {
@@ -813,7 +831,12 @@
 			g.pDiv.style.display = 'none';
 		}
 		g.hTable = document.createElement('table');
-		g.gDiv.className = 'flexigrid';
+		g.gDiv.className = p.GridName;//'flexigrid';
+		
+		if (p.hideBody){
+		   $(g.gDiv).addClass('hideBody');	
+		}
+		
 		if (p.width != 'auto') {
 			g.gDiv.style.width = p.width + 'px';
 		}
@@ -831,32 +854,94 @@
 			g.tDiv.className = 'tDiv';
 			var tDiv2 = document.createElement('div');
 			tDiv2.className = 'tDiv2';
-			for (var i = 0; i < p.buttons.length; i++) {
+		    for (var i = 0; i < p.buttons.length; i++) {
 				var btn = p.buttons[i];
 				if (!btn.separator) {
 					var btnDiv = document.createElement('div');
 					btnDiv.className = 'fbutton';
-					btnDiv.innerHTML = ("<div><span>") + (btn.hidename ? "&nbsp;" : btn.name) + ("</span></div>");
+					$(btnDiv).css({'margin-left':2}); 
+					btnDiv.innerHTML = ("<div><span>") + (btn.hidename ? "&nbsp;" : btn.name) +("</span></div>");
+				
+				     // down  --- Add drop-down for button
+				    if (btn.down){
+					   var dDiv = document.createElement('div');
+					   var bBtn = document.createElement('b');
+					   bBtn.className = 'bBtn';
+					   dDiv.className = 'dDiv_'+i;
+						  
+					   $(bBtn).css({'right': 0,'top': 0,'border':0,'border-left':1}).show();
+					   $(bBtn).html('<div></div>');
+					   $(bBtn).attr('name','dDiv_'+i);
+					
+					   $(bBtn).click(function () {
+						          var a01 = $(this).attr('name');
+						          var abtn = $('.'+ a01);
+					 			 
+					              if (!abtn.hasClass('dDiv'))
+						          { 
+						           abtn.addClass('dDiv');								
+						           $('.dDiv').show();
+						           var nw = $(this).offset();
+								   var dd = $(g.tDiv).offset();
+								   var mdh = $(g.mDiv).height();
+								   var nh = $(g.tDiv).height();
+								   var nl = nw.left - dd.left;						                  
+								   var ntop = nh + mdh;
+								   abtn.css({
+											'left': nl,
+										 	top: ntop
+										});
+								    abtn.hover(function(){
+									   $(this).show();
+								    },function(){
+								       $(this).hide();
+								       $(this).removeClass('dDiv');
+							        })						     
+							      	$(g.mDiv).hover(function(){},function(){$('.dDiv').hide(); abtn.removeClass('dDiv');});  
+								 }
+						          else
+						          {
+							          $('.dDiv').hide(); 
+							          abtn.removeClass('dDiv');
+							      }
+						        
+							     return true;
+							 }
+							);
+							
+					        $(btnDiv).append(bBtn);	
+					
+							var dUl = document.createElement('p');
+							$(dDiv).css({'border':'1px #ccc solid','padding':'5px'});
+							dUl.innerHTML = btn.down;
+							$(dDiv).append(dUl);
+							$(dDiv).hide();								
+					        $(g.gDiv).append(dDiv);
+				
+				      }
+					
 					if (btn.bclass) $('span', btnDiv).addClass(btn.bclass).css({
 						paddingLeft: 20
 					});
 					if (btn.bimage) // if bimage defined, use its string as an image url for this buttons style (RS)
 						$('span',btnDiv).css( 'background', 'url('+btn.bimage+') no-repeat center left' );
 						$('span',btnDiv).css( 'paddingLeft', 20 );
-						
+
 					if (btn.tooltip) // add title if exists (RS)
 						$('span',btnDiv)[0].title = btn.tooltip;
-						
+
 					btnDiv.onpress = btn.onpress;
 					btnDiv.name = btn.name;
 					if (btn.id) {
 						btnDiv.id = btn.id;
 					}
+					
 					if (btn.onpress) {
 						$(btnDiv).click(function () {
 							this.onpress(this.id || this.name, g.gDiv);
 						});
 					}
+	
 					$(tDiv2).append(btnDiv);
 					if ($.browser.msie && $.browser.version < 7.0) {
 						$(btnDiv).hover(function () {
@@ -874,19 +959,19 @@
 			$(g.gDiv).prepend(g.tDiv);
 		}
 		g.hDiv.className = 'hDiv';
-		
+
 		// Define a combo button set with custom action'ed calls when clicked.
 		if( p.combobuttons && $(g.tDiv2) )
 		{
 			var btnDiv = document.createElement('div');
 			btnDiv.className = 'fbutton';
-			
+
 			var tSelect = document.createElement('select');
 			$(tSelect).change( function () { g.combo_doSelectAction( tSelect ) } );
 			$(tSelect).click( function () { g.combo_resetIndex( tSelect) } );
 			tSelect.className = 'cselect';
 			$(btnDiv).append(tSelect);
-			
+
 			for (i=0;i<p.combobuttons.length;i++)
 			{
 				var btn = p.combobuttons[i];
@@ -894,7 +979,7 @@
 				{
 					var btnOpt = document.createElement('option');
 					btnOpt.innerHTML = btn.name;
-					
+
 					if (btn.bclass) 
 						$(btnOpt)
 						.addClass(btn.bclass)
@@ -903,10 +988,10 @@
 					if (btn.bimage)  // if bimage defined, use its string as an image url for this buttons style (RS)
 						$(btnOpt).css( 'background', 'url('+btn.bimage+') no-repeat center left' );
 						$(btnOpt).css( 'paddingLeft', 20 );
-						
+
 					if (btn.tooltip) // add title if exists (RS)
 						$(btnOpt)[0].title = btn.tooltip;
-						
+
 					if (btn.onpress)
 					{
 						btnOpt.value = btn.onpress;
@@ -916,8 +1001,8 @@
 			}
 			$('.tDiv2').append(btnDiv);
 		}		
-	
-		
+
+
 		$(t).before(g.hDiv);
 		g.hTable.cellPadding = 0;
 		g.hTable.cellSpacing = 0;
@@ -947,6 +1032,8 @@
 			if (!p.colmodel) {
 				$(this).attr('axis', 'col' + ci++);
 			}
+			
+
 			$(thdiv).css({
 				textAlign: this.align,
 				width: this.width + 'px'
@@ -1101,9 +1188,9 @@
 			g.pDiv.className = 'pDiv';
 			g.pDiv.innerHTML = '<div class="pDiv2"></div>';
 			$(g.bDiv).after(g.pDiv);
-			var html = ' <div class="pGroup"> <div class="pFirst pButton"><span></span></div><div class="pPrev pButton"><span></span></div> </div> <div class="btnseparator"></div> <div class="pGroup"><span class="pcontrol">' + p.pagetext + ' <input type="text" size="4" value="1" /> ' + p.outof + ' <span> 1 </span></span></div> <div class="btnseparator"></div> <div class="pGroup"> <div class="pNext pButton"><span></span></div><div class="pLast pButton"><span></span></div> </div> <div class="btnseparator"></div> <div class="pGroup"> <div class="pReload pButton"><span></span></div> </div> <div class="btnseparator"></div> <div class="pGroup"><span class="pPageStat"></span></div>';
+			var html = ' <div class="pGroup"> <div class="pFirst pButton"><span></span></div><div class="pPrev pButton"><span></span></div> </div> <div class="btnseparator"></div> <div class="pGroup"><span class="pcontrol">' + p.pagetext + ' <input type="text" size="4" value="1" /> ' + p.outof + ' <span> 1 </span></span></div> <div class="btnseparator"></div> <div class="pGroup"> <div class="pNext pButton"><span></span></div><div class="pLast pButton"><span></span></div> </div> <div class="btnseparator"></div> <div class="pGroup"> <div class="pReloads pButton"><span></span></div> </div> <div class="btnseparator"></div> <div class="pGroup"><span class="pPageStat"></span></div>';
 			$('div', g.pDiv).html(html);
-			$('.pReload', g.pDiv).click(function () {
+			$('.pReloads', g.pDiv).click(function () {
 				g.populate()
 			});
 			$('.pFirst', g.pDiv).click(function () {
@@ -1380,26 +1467,34 @@
 	}; //end noSelect
   $.fn.flexSearch = function(p) { // function to search grid
     return this.each( function() { if (this.grid&&this.p.searchitems) this.grid.doSearch(); });
-  }; //end flexSearch
+  }; //end flexSearch  
+
   $.fn.flexModify = function(p){ //function to modify selected row to grid
+	     var b=true;
          $('tr',this.grid).each(function(){
 		      var self = $(this);
 		      if (self.hasClass('trSelected'))
 		      {
-			     p(self);
-			     return false;
-		       }
-	        });	
-   };// end flexModify
+			     p(self); 
+			     b=false;
+			     return b;
+		      }
+		  });
+		  if (b) p(null); 
+  };// end flexModify
  
   $.fn.flexDeleteRows = function(p){ //function to delete selected rows to grid 
+	       var b=0; 
            $('tr',this.grid).each(function(){
 		      var self = $(this);
 		      if (self.hasClass('trSelected'))
 		      {
-			     p(self);			    
-		       }
+			     p(self);
+			     b++;
+			  }
 	        });	
+	       if (b==0) p(null);
   };//end flexDeleteRows
+
 
 })(jQuery);
